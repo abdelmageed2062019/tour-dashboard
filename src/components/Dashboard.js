@@ -2,14 +2,21 @@ import { useEffect } from "react";
 import { Users, Map, TrendingUp, DollarSign } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchUsersAsync } from "../app/users/userSlice";
+import { fetchToursAsync } from "../app/tours/toursSlice";
+import { fetchPaginatedBookingsAsync } from "../app/bookings/bookingSlice";
 
 export default function Dashboard() {
   const dispatch = useDispatch();
 
   const { users } = useSelector((state) => state.users);
+  const { tours } = useSelector((state) => state.tours);
+  const { pagination, bookings } = useSelector((state) => state.bookings);
+  console.log(users);
 
   useEffect(() => {
     dispatch(fetchUsersAsync());
+    dispatch(fetchToursAsync());
+    dispatch(fetchPaginatedBookingsAsync({ page: 1, limit: 3 }));
   }, [dispatch]);
 
   const stats = [
@@ -23,21 +30,21 @@ export default function Dashboard() {
     {
       icon: Map,
       label: "Active Tours",
-      value: "45",
+      value: tours.length,
       change: "+5%",
       color: "bg-emerald-500",
     },
     {
       icon: TrendingUp,
       label: "Bookings",
-      value: "892",
+      value: pagination.total,
       change: "+18%",
       color: "bg-purple-500",
     },
     {
       icon: DollarSign,
       label: "Revenue",
-      value: "$125,400",
+      value: `$${pagination.totalAmount}`,
       change: "+22%",
       color: "bg-amber-500",
     },
@@ -77,48 +84,43 @@ export default function Dashboard() {
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h3 className="text-lg font-semibold mb-4">Recent Bookings</h3>
           <div className="space-y-4">
-            {[1, 2, 3].map((_, i) => (
+            {tours.slice(0, 3).map((tour, i) => (
               <div
                 key={i}
                 className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
               >
-                <img
-                  src={`https://source.unsplash.com/featured/100x100?tour,travel&sig=${i}`}
-                  alt="Tour"
-                  className="w-12 h-12 rounded-lg object-cover"
-                />
+                <video controls className="w-12 h-12 rounded-lg object-cover">
+                  <source src={tour.media[0].url} type="video/mp4" />
+                </video>
                 <div className="flex-1">
-                  <h4 className="font-medium">Swiss Alps Adventure</h4>
-                  <p className="text-sm text-gray-500">Booked by John Doe</p>
+                  <h4 className="font-medium">{tour.title}</h4>
+                  <p className="text-sm text-gray-500">{tour.type}</p>
                 </div>
-                <span className="text-emerald-600 font-medium">$1,299</span>
+                <span className="text-emerald-600 font-medium">
+                  ${tour.viewPrice}
+                </span>
               </div>
             ))}
           </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold mb-4">Popular Tours</h3>
+          <h3 className="text-lg font-semibold mb-4">Recent Bookings</h3>
           <div className="space-y-4">
-            {[4, 5, 6].map((_, i) => (
+            {bookings.map((book, i) => (
               <div
                 key={i}
                 className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
               >
-                <img
-                  src={`https://source.unsplash.com/featured/100x100?landscape,nature&sig=${i}`}
-                  alt="Tour"
-                  className="w-12 h-12 rounded-lg object-cover"
-                />
                 <div className="flex-1">
-                  <h4 className="font-medium">Iceland Northern Lights</h4>
+                  <h4 className="font-medium">{book.tour.title}</h4>
                   <div className="flex items-center text-sm text-gray-500">
-                    <span className="flex items-center">
-                      ★★★★★ • 24 reviews
-                    </span>
+                    <span className="flex items-center">{book.user.email}</span>
                   </div>
                 </div>
-                <span className="text-emerald-600 font-medium">$2,499</span>
+                <span className="text-emerald-600 font-medium">
+                  ${book.amount}
+                </span>
               </div>
             ))}
           </div>

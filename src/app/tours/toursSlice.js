@@ -32,6 +32,8 @@ export const fetchTourAsync = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const tour = await fetchTour(id);
+      console.log(tour);
+
       return tour;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
@@ -44,6 +46,8 @@ export const createTourAsync = createAsyncThunk(
   async (tour, { rejectWithValue }) => {
     try {
       const newTour = await createTour(tour);
+      console.log(tour);
+
       return newTour;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);

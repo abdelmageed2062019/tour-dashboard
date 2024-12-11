@@ -1,23 +1,26 @@
-// UpdateTour.js
 import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { updateTourAsync } from "../app/tours/toursSlice";
-import { useParams } from "react-router-dom";
-import { fetchTourAsync } from "../app/tours/toursSlice";
+import { useParams, useNavigate } from "react-router-dom";
+import { fetchTourAsync, updateTourAsync } from "../app/tours/toursSlice";
 
 const UpdateTour = () => {
   const dispatch = useDispatch();
-  const params = useParams();
+  const navigate = useNavigate();
+  const { id } = useParams();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     duration: "",
     type: "",
     availability: "Available",
-    pickupLocation: "",
+    pickUpAndDropOff: "", // New field
+    details: "", // New field
+    fullDay: "", // New field
+    viewPrice: "", // New field
+    note: "", // New field
     languages: [],
     city: "",
-    media: [],
+    media: [], // Array of media objects
     prices: {
       privateTourWithLunch: {
         single: 0,
@@ -55,14 +58,19 @@ const UpdateTour = () => {
   });
 
   useEffect(() => {
-    const getTour = async () => {
-      await dispatch(fetchTourAsync(params.id));
-      const tour = await dispatch(fetchTourAsync(params.id));
-      setFormData(tour.payload);
+    const fetchTour = async () => {
+      try {
+        const response = await dispatch(fetchTourAsync(id));
+        if (response.payload) {
+          setFormData(response.payload);
+        }
+      } catch (error) {
+        console.error("Error fetching tour data:", error);
+      }
     };
 
-    getTour();
-  }, [params.id]);
+    fetchTour();
+  }, [id, dispatch]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -72,45 +80,60 @@ const UpdateTour = () => {
     }));
   };
 
-  const handleArrayInputChange = (e, field) => {
+  const handleNestedInputChange = (e, category, subCategory) => {
     const { value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [field]: value.split(",").map((item) => item.trim()),
+      prices: {
+        ...prev.prices,
+        [category]: {
+          ...prev.prices[category],
+          [subCategory]: Number(value),
+        },
+      },
+    }));
+  };
+
+  const handleArrayInputChange = (e) => {
+    const { value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      languages: value.split(",").map((item) => item.trim()),
     }));
   };
 
   const handleFileChange = (e) => {
+    const files = Array.from(e.target.files).map((file) => ({
+      url: URL.createObjectURL(file), // Create a URL for the file
+      type: file.type.startsWith("image/") ? "image" : "video", // Determine type
+      caption: "", // Placeholder for caption
+    }));
     setFormData((prev) => ({
       ...prev,
-      media: e.target.files[0],
+      media: [...prev.media, ...files],
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Logic to update the tour
-    dispatch(updateTourAsync({ id: params.id, tour: formData }));
-    console.log(formData);
-  };
-
-  const languagesList = ["English", "Spanish", "French", "German", "Italian"]; // Add more languages as needed
-
-  const handleLanguageChange = (e) => {
-    const selectedOptions = Array.from(e.target.selectedOptions).map(
-      (option) => option.value
-    );
-    setFormData((prev) => ({
-      ...prev,
-      languages: selectedOptions,
-    }));
+    try {
+      const response = await dispatch(updateTourAsync({ id, tour: formData }));
+      if (response.meta.requestStatus === "fulfilled") {
+        navigate("/tours");
+      } else {
+        console.error("Failed to update the tour");
+      }
+    } catch (error) {
+      console.error("Error updating the tour:", error);
+    }
   };
 
   return (
     <div className="container mx-auto p-4">
-      <h3 className="text-lg font-semibold mb-4">Add New Tour</h3>
+      <h3 className="text-lg font-semibold mb-4">Update Tour</h3>
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="grid grid-cols-2 gap-4">
+          {/* Title */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Title
@@ -123,6 +146,7 @@ const UpdateTour = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
             />
           </div>
+          {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Description
@@ -134,115 +158,86 @@ const UpdateTour = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
             />
           </div>
+          {/* Pick Up and Drop Off */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Duration
+              Pick Up and Drop Off
             </label>
             <input
               type="text"
-              name="duration"
-              value={formData.duration}
+              name="pickUpAndDropOff"
+              value={formData.pickUpAndDropOff}
               onChange={handleInputChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
             />
           </div>
+          {/* Details */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Type
+              Details
             </label>
             <input
               type="text"
-              name="type"
-              value={formData.type}
+              name="details"
+              value={formData.details}
               onChange={handleInputChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
             />
           </div>
+          {/* Full Day */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Availability
-            </label>
-            <div className="flex gap-4">
-              <label>
-                <input
-                  type="radio"
-                  name="availability"
-                  value="Available"
-                  checked={formData.availability === "Available"}
-                  onChange={handleInputChange}
-                />
-                Available
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="availability"
-                  value="Not Available"
-                  checked={formData.availability === "Not Available"}
-                  onChange={handleInputChange}
-                />
-                Not Available
-              </label>
-            </div>
-          </div>
-          {/* <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Pickup Location
+              Full Day
             </label>
             <input
               type="text"
-              name="pickupLocation"
-              value={formData.pickupLocation}
-              onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
-            />
-          </div> */}
-          {/* <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Languages
-            </label>
-            <select
-              multiple
-              value={formData.languages}
-              onChange={handleLanguageChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
-            >
-              {languagesList.map((language) => (
-                <option key={language} value={language}>
-                  {language}
-                </option>
-              ))}
-            </select>
-          </div> */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              City
-            </label>
-            <input
-              type="text"
-              name="city"
-              value={formData.city}
+              name="fullDay"
+              value={formData.fullDay}
               onChange={handleInputChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
             />
           </div>
+          {/* View Price */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Media
+              View Price
+            </label>
+            <input
+              type="text"
+              name="viewPrice"
+              value={formData.viewPrice}
+              onChange={handleInputChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+            />
+          </div>
+          {/* Note */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Note
+            </label>
+            <textarea
+              name="note"
+              value={formData.note}
+              onChange={handleInputChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+            />
+          </div>
+          {/* Media Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Media Upload
             </label>
             <input
               type="file"
-              name="media"
-              onChange={handleFileChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
               multiple
+              onChange={handleFileChange}
+              className="mt-1 block w-full"
             />
           </div>
         </div>
+        {/* Price Inputs */}
         <div>
-          <label className="block text-lg mb-4 font-medium text-gray-700">
-            Prices
-          </label>
+          <label className="block text-lg font-medium mb-2">Prices</label>
           <div className="grid grid-cols-2 gap-4">
             {Object.keys(formData.prices).map((category) =>
               Object.keys(formData.prices[category]).map((subCategory) => (
@@ -255,9 +250,10 @@ const UpdateTour = () => {
                   </label>
                   <input
                     type="number"
-                    name={`prices.${category}.${subCategory}`}
                     value={formData.prices[category][subCategory]}
-                    onChange={handleInputChange}
+                    onChange={(e) =>
+                      handleNestedInputChange(e, category, subCategory)
+                    }
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
                   />
                 </div>
@@ -265,9 +261,11 @@ const UpdateTour = () => {
             )}
           </div>
         </div>
+        {/* Submit Button */}
         <div className="flex justify-end">
           <button
             type="button"
+            onClick={() => navigate("/tours")}
             className="mr-2 px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400"
           >
             Cancel
@@ -276,7 +274,7 @@ const UpdateTour = () => {
             type="submit"
             className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
           >
-            Add Tour
+            Update Tour
           </button>
         </div>
       </form>

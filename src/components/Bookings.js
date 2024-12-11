@@ -1,36 +1,43 @@
-import React, { useState } from 'react';
-import { Calendar, Users, MapPin, Clock, Pencil, Trash2, Plus } from 'lucide-react';
-
-const mockBookings = [
-  {
-    id: '1',
-    tourName: 'Swiss Alps Adventure',
-    userName: 'John Doe',
-    userEmail: 'john@example.com',
-    date: '2024-06-15',
-    participants: 2,
-    status: 'confirmed',
-    totalPrice: 2598
-  },
-  {
-    id: '2',
-    tourName: 'Iceland Northern Lights',
-    userName: 'Jane Smith',
-    userEmail: 'jane@example.com',
-    date: '2024-09-20',
-    participants: 4,
-    status: 'pending',
-    totalPrice: 9996
-  }
-];
+import React, { useState, useEffect } from "react";
+import { Calendar, Users, Clock, Pencil, Trash2, Download } from "lucide-react";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  fetchPaginatedBookingsAsync,
+  updateBookingAsync,
+  deleteBookingAsync,
+  downloadMonthlyBookingsAsync,
+} from "../app/bookings/bookingSlice";
+import { fetchToursAsync } from "../app/tours/toursSlice";
 
 export default function Bookings() {
-  const [bookings, setBookings] = useState(mockBookings);
+  const dispatch = useDispatch();
+  const { bookings, loading, error, pagination } = useSelector(
+    (state) => state.bookings
+  );
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedYear, setSelectedYear] = useState("");
+
+  const { pages } = pagination;
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBooking, setEditingBooking] = useState(null);
+  const [formError, setFormError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [limit] = useState(10);
+
+  useEffect(() => {
+    dispatch(fetchToursAsync());
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchPaginatedBookingsAsync({ page: currentPage, limit }));
+  }, [dispatch, currentPage, limit]);
 
   const handleDelete = (id) => {
-    setBookings(bookings.filter(booking => booking.id !== id));
+    if (window.confirm("Are you sure you want to delete this booking?")) {
+      dispatch(deleteBookingAsync(id));
+    }
   };
 
   const handleEdit = (booking) => {
@@ -38,41 +45,136 @@ export default function Bookings() {
     setIsModalOpen(true);
   };
 
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const bookingData = {
+      time: formData.get("time"),
+      cellPhone: formData.get("cellPhone"),
+      status: formData.get("status"),
+    };
+
+    console.log(bookingData);
+
+    dispatch(
+      updateBookingAsync({
+        id: editingBooking._id,
+        bookingData,
+      })
+    )
+      .unwrap()
+      .then(() => {
+        setIsModalOpen(false);
+        setEditingBooking(null);
+        dispatch(fetchPaginatedBookingsAsync({ page: currentPage, limit }));
+      })
+      .catch((err) => setFormError(err));
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
-      case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "confirmed":
+        return "bg-green-100 text-green-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "cancelled":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const handleDownloadMonthlyCSV = async () => {
+    if (!selectedMonth || !selectedYear) {
+      alert("Please select a year and month.");
+      return;
+    }
+
+    try {
+      await dispatch(
+        downloadMonthlyBookingsAsync({
+          year: selectedYear,
+          month: selectedMonth,
+        })
+      ).unwrap();
+      alert("Download started successfully!");
+    } catch (error) {
+      alert(`Failed to download bookings: ${error}`);
+    }
+  };
+
+  const renderPagination = () => {
+    const pageNumbers = Array.from({ length: pages }, (_, i) => i + 1);
+
+    return (
+      <div className="flex justify-center items-center gap-2 mt-6">
+        {pageNumbers.map((page) => (
+          <button
+            key={page}
+            onClick={() => setCurrentPage(page)}
+            className={`px-3 py-1 rounded-md ${
+              page === currentPage
+                ? "bg-emerald-600 text-white"
+                : "bg-gray-200 hover:bg-gray-300"
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+      </div>
+    );
   };
 
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Bookings Management</h2>
-        <button
-          onClick={() => {
-            setEditingBooking(null);
-            setIsModalOpen(true);
-          }}
-          className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add Booking
-        </button>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            placeholder="Year"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="border border-gray-300 rounded-md"
+          />
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="border border-gray-300 rounded-md px-3 py-3"
+          >
+            <option value="">Month</option>
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i + 1} value={i + 1}>
+                {new Date(0, i).toLocaleString("default", { month: "long" })}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={handleDownloadMonthlyCSV}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Download Monthly CSV
+          </button>
+        </div>
       </div>
+
+      {loading && <p>Loading bookings...</p>}
+      {error && <p className="text-red-500">Error: {error}</p>}
+      {formError && <p className="text-red-500">Error: {formError}</p>}
 
       <div className="grid gap-6">
         {bookings.map((booking) => (
-          <div key={booking.id} className="bg-white rounded-xl shadow-sm p-6">
+          <div key={booking._id} className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="text-lg font-semibold mb-2">{booking.tourName}</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  {booking.tour.title}
+                </h3>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-gray-600">
                     <Users className="w-4 h-4" />
-                    <span>{booking.userName} ({booking.userEmail})</span>
+                    <span>User: {booking.user.email}</span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600">
                     <Calendar className="w-4 h-4" />
@@ -80,16 +182,20 @@ export default function Bookings() {
                   </div>
                   <div className="flex items-center gap-2 text-gray-600">
                     <Clock className="w-4 h-4" />
-                    <span>{booking.participants} participants</span>
+                    <span>{booking.time}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <span>Contact: {booking.cellPhone}</span>
                   </div>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2">
-                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(booking.status)}`}>
+                <span
+                  className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                    booking.status
+                  )}`}
+                >
                   {booking.status}
-                </span>
-                <span className="text-2xl font-bold text-emerald-600">
-                  ${booking.totalPrice}
                 </span>
                 <div className="flex gap-2 mt-2">
                   <button
@@ -99,7 +205,7 @@ export default function Bookings() {
                     <Pencil className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(booking.id)}
+                    onClick={() => handleDelete(booking._id)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -111,86 +217,75 @@ export default function Bookings() {
         ))}
       </div>
 
+      {renderPagination()}
+
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 w-full max-w-xl">
-            <h3 className="text-lg font-semibold mb-4">
-              {editingBooking ? 'Edit Booking' : 'Add New Booking'}
-            </h3>
-            <form className="space-y-4">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-lg p-6 w-full max-w-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4">Edit Booking</h3>
+            <form onSubmit={handleFormSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Tour</label>
-                  <select
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
-                    defaultValue={editingBooking?.tourName}
-                  >
-                    <option>Swiss Alps Adventure</option>
-                    <option>Iceland Northern Lights</option>
-                  </select>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Time
+                  </label>
+                  <input
+                    type="time"
+                    name="time"
+                    defaultValue={editingBooking?.time}
+                    required
+                    className="block w-full mt-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Date</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Contact
+                  </label>
                   <input
-                    type="date"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
-                    defaultValue={editingBooking?.date}
+                    type="tel"
+                    name="cellPhone"
+                    defaultValue={editingBooking?.cellPhone}
+                    required
+                    className="block w-full mt-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">User Name</label>
-                  <input
-                    type="text"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
-                    defaultValue={editingBooking?.userName}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <input
-                    type="email"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
-                    defaultValue={editingBooking?.userEmail}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Participants</label>
-                  <input
-                    type="number"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
-                    defaultValue={editingBooking?.participants}
-                    min="1"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Status
+                  </label>
                   <select
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
-                    defaultValue={editingBooking?.status}
+                    name="status"
+                    defaultValue={editingBooking?.status || "pending"}
+                    required
+                    className="block w-full mt-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
                   >
-                    <option value="confirmed">Confirmed</option>
                     <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
                 </div>
               </div>
-              <div className="flex justify-end gap-3">
+              <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                  className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700"
+                  className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
                 >
-                  {editingBooking ? 'Update' : 'Create'}
+                  Save
                 </button>
               </div>
             </form>

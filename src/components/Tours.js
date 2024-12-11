@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
-import { Pencil, Trash2, Plus, Star } from "lucide-react";
+import { Pencil, Trash2, Plus } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom"; // Import Link
+import { Link } from "react-router-dom";
 import { fetchToursAsync, deleteTourAsync } from "../app/tours/toursSlice";
 
 export default function Tours() {
@@ -52,179 +52,45 @@ export default function Tours() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {tours.map((tour) => (
-          <div
-            key={tour._id}
-            className="bg-white rounded-xl shadow-md overflow-hidden transition-transform transform "
-          >
-            {tour.media && tour.media.length > 0 && (
-              <video
-                controls
-                className="w-full h-48 object-cover"
-                src={tour.media[0].url}
-                alt={tour.title}
-              />
-            )}
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-lg font-semibold">{tour.title}</h3>
-                {tour.rating && (
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="text-sm font-medium">{tour.rating}</span>
-                  </div>
-                )}
-              </div>
-              <p className="text-gray-600 text-sm mb-4">{tour.description}</p>
-              <div className="flex flex-wrap gap-2 mb-4">
-                <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                  {tour.duration}
-                </span>
-                <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                  {tour.type}
-                </span>
-                <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
-                  {tour.availability}
-                </span>
-                {/* <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
-                  Pickup: {tour.pickupLocation}
-                </span> */}
-              </div>
-              {/* {tour.languages && tour.languages.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-xs font-medium text-gray-700">
-                    Languages:
-                  </p>
-                  <ul className="list-disc list-inside text-sm text-gray-600">
-                    {tour.languages.map((lang, index) => (
-                      <li key={index}>{lang}</li>
-                    ))}
-                  </ul>
-                </div>
-              )} */}
-              <div className="mb-4">
-                <p className="text-xs font-medium text-gray-700">City:</p>
-                <span className="text-sm text-gray-600">{tour.city}</span>
-              </div>
-              <div className="mb-4">
-                <p className="text-xs font-medium text-gray-700">Prices:</p>
-                <div className="text-sm text-gray-600">
-                  <div className="mb-1">
-                    <strong>Private Tour with Lunch:</strong>
-                    <ul className="list-disc list-inside">
-                      <li>
-                        Single: ${tour.prices.privateTourWithLunch.single}
-                      </li>
-                      <li>
-                        Two People: $
-                        {tour.prices.privateTourWithLunch.twoPeople}
-                      </li>
-                      <li>
-                        3 to 5 People: $
-                        {tour.prices.privateTourWithLunch.threeToFive}
-                      </li>
-                      <li>
-                        Above Six: ${tour.prices.privateTourWithLunch.aboveSix}
-                      </li>
-                      <li>
-                        Child (6 to 11): $
-                        {tour.prices.privateTourWithLunch.childSixToEleven}
-                      </li>
-                      <li>
-                        Child (Under 6): $
-                        {tour.prices.privateTourWithLunch.childUnderSix}
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="mb-1">
-                    <strong>Private Tour without Lunch:</strong>
-                    <ul className="list-disc list-inside">
-                      <li>
-                        Single: ${tour.prices.privateTourWithoutLunch.single}
-                      </li>
-                      <li>
-                        Two People: $
-                        {tour.prices.privateTourWithoutLunch.twoPeople}
-                      </li>
-                      <li>
-                        3 to 5 People: $
-                        {tour.prices.privateTourWithoutLunch.threeToFive}
-                      </li>
-                      <li>
-                        Above Six: $
-                        {tour.prices.privateTourWithoutLunch.aboveSix}
-                      </li>
-                      <li>
-                        Child (6 to 11): $
-                        {tour.prices.privateTourWithoutLunch.childSixToEleven}
-                      </li>
-                      <li>
-                        Child (Under 6): $
-                        {tour.prices.privateTourWithoutLunch.childUnderSix}
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="mb-1">
-                    <strong>Private Tour Guide:</strong>
-                    <ul className="list-disc list-inside">
-                      <li>Single: ${tour.prices.privateTourGuide.single}</li>
-                      <li>
-                        Two People: ${tour.prices.privateTourGuide.twoPeople}
-                      </li>
-                      <li>
-                        3 to 5 People: $
-                        {tour.prices.privateTourGuide.threeToFive}
-                      </li>
-                      <li>
-                        Above Six: ${tour.prices.privateTourGuide.aboveSix}
-                      </li>
-                      <li>
-                        Child (6 to 11): $
-                        {tour.prices.privateTourGuide.childSixToEleven}
-                      </li>
-                      <li>
-                        Child (Under 6): $
-                        {tour.prices.privateTourGuide.childUnderSix}
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="mb-1">
-                    <strong>Private Car with Driver:</strong>
-                    <ul className="list-disc list-inside">
-                      <li>
-                        Single: ${tour.prices.privateCarWithDriver.single}
-                      </li>
-                      <li>
-                        Two People: $
-                        {tour.prices.privateCarWithDriver.twoPeople}
-                      </li>
-                      <li>
-                        3 to 5 People: $
-                        {tour.prices.privateCarWithDriver.threeToFive}
-                      </li>
-                      <li>
-                        Above Six: ${tour.prices.privateCarWithDriver.aboveSix}
-                      </li>
-                      <li>
-                        Child (6 to 11): $
-                        {tour.prices.privateCarWithDriver.childSixToEleven}
-                      </li>
-                      <li>
-                        Child (Under 6): $
-                        {tour.prices.privateCarWithDriver.childUnderSix}
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-2xl font-bold text-emerald-600">
-                  ${tour.price || "N/A"}
-                </span>
-                <div className="flex gap-2">
+      <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="text-left px-6 py-4 font-medium text-gray-600">
+              Title
+            </th>
+            <th className="text-left px-6 py-4 font-medium text-gray-600">
+              City
+            </th>
+            <th className="text-left px-6 py-4 font-medium text-gray-600">
+              Price
+            </th>
+            <th className="text-left px-6 py-4 font-medium text-gray-600">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {tours.map((tour, index) => (
+            <tr
+              key={tour._id}
+              className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}
+            >
+              <td className="px-6 py-4">
+                <Link
+                  to={`/tours/${tour._id}`}
+                  className="text-indigo-600 hover:underline"
+                >
+                  {tour.title}
+                </Link>
+              </td>
+              <td className="px-6 py-4">{tour.city || "N/A"}</td>
+              <td className="px-6 py-4 text-emerald-600 font-semibold">
+                ${tour.viewPrice || "N/A"}
+              </td>
+              <td className="px-6 py-4">
+                <div className="flex items-center gap-2">
                   <Link
-                    to={`/update-tour/${tour._id}`} // Link to Update Tour page
+                    to={`/update-tour/${tour._id}`}
                     className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                   >
                     <Pencil className="w-4 h-4" />
@@ -236,11 +102,11 @@ export default function Tours() {
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

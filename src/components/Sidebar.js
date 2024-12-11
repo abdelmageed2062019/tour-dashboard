@@ -10,7 +10,11 @@ import {
   MessageCircleCodeIcon,
 } from "lucide-react";
 
+import { logout } from "../app/auth/authSlice";
+import { useDispatch } from "react-redux";
+
 export default function Sidebar() {
+  const dispatch = useDispatch();
   const menuItems = [
     { id: "dashboard", icon: LayoutDashboard, label: "Dashboard", path: "/" },
     { id: "users", icon: Users, label: "Users", path: "/users" },
@@ -24,7 +28,11 @@ export default function Sidebar() {
     },
   ];
 
-  const location = useLocation(); // Get current route
+  const location = useLocation();
+
+  const handleLogout = () => {
+    dispatch(logout());
+  };
 
   return (
     <div className="h-100 w-64 bg-gray-900 text-white p-6">
@@ -54,7 +62,10 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <button className=" flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white transition-colors">
+      <button
+        className=" flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white transition-colors"
+        onClick={handleLogout}
+      >
         <LogOut className="w-5 h-5" />
         <span>Logout</span>
       </button>

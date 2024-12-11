@@ -11,7 +11,10 @@ import { store } from "./app/store";
 import { Provider } from "react-redux";
 import AddTour from "./components/AddTour";
 import UpdateTour from "./components/UpdateTour";
+import TourDetail from "./components/TourDetails";
+
 import "./App.css";
+import Reviews from "./components/Reviews";
 function App() {
   return (
     <Provider store={store}>
@@ -32,6 +35,8 @@ function App() {
                       <Route path="/" element={<Dashboard />} />
                       <Route path="/users" element={<Users />} />
                       <Route path="/tours" element={<Tours />} />
+                      <Route path="/tours/:id" element={<TourDetail />} />
+                      <Route path="/reviews" element={<Reviews />} />
                       <Route path="/bookings" element={<Bookings />} />
                       <Route path="/add-tour" element={<AddTour />} />
                       <Route path="/update-tour/:id" element={<UpdateTour />} />

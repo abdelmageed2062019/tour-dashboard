@@ -10,10 +10,14 @@ const AddTour = () => {
     duration: "",
     type: "",
     availability: "Available",
-    pickupLocation: "",
+    pickUpAndDropOff: "", // New field
+    details: "", // New field
+    fullDay: "", // New field
+    viewPrice: "", // New field
+    note: "", // New field
     languages: [],
     city: "",
-    media: [],
+    media: [], // Array of media objects
     prices: {
       privateTourWithLunch: {
         single: 0,
@@ -49,8 +53,6 @@ const AddTour = () => {
       },
     },
   });
-
-  const languagesList = ["English", "Spanish", "French", "German", "Italian"]; // Add more languages as needed
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -92,16 +94,6 @@ const AddTour = () => {
     }));
   };
 
-  const handleLanguageChange = (e) => {
-    const selectedOptions = Array.from(e.target.selectedOptions).map(
-      (option) => option.value
-    );
-    setFormData((prev) => ({
-      ...prev,
-      languages: selectedOptions,
-    }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -119,10 +111,9 @@ const AddTour = () => {
         data.append(key, formData[key]);
       }
     }
-
+    console.log(formData);
     // Dispatch the action to create the tour
     await dispatch(createTourAsync(data));
-    console.log(formData);
   };
 
   return (
@@ -204,35 +195,65 @@ const AddTour = () => {
               </label>
             </div>
           </div>
-          {/* <div>
+          <div>
             <label className="block text-sm font-medium text-gray-700">
-              Pickup Location
+              Pickup and Drop Off
             </label>
             <input
               type="text"
-              name="pickupLocation"
-              value={formData.pickupLocation}
+              name="pickUpAndDropOff"
+              value={formData.pickUpAndDropOff}
               onChange={handleInputChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
             />
-          </div> */}
-          {/* <div>
+          </div>
+          <div>
             <label className="block text-sm font-medium text-gray-700">
-              Languages
+              Details
             </label>
-            <select
-              multiple
-              value={formData.languages}
-              onChange={handleLanguageChange}
+            <input
+              type="text"
+              name="details"
+              value={formData.details}
+              onChange={handleInputChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
-            >
-              {languagesList.map((language) => (
-                <option key={language} value={language}>
-                  {language}
-                </option>
-              ))}
-            </select>
-          </div> */}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Full Day
+            </label>
+            <input
+              type="text"
+              name="fullDay"
+              value={formData.fullDay}
+              onChange={handleInputChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              View Price
+            </label>
+            <input
+              type="text"
+              name="viewPrice"
+              value={formData.viewPrice}
+              onChange={handleInputChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Note
+            </label>
+            <textarea
+              name="note"
+              value={formData.note}
+              onChange={handleInputChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+            />
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
               City
@@ -243,6 +264,19 @@ const AddTour = () => {
               value={formData.city}
               onChange={handleInputChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Languages
+            </label>
+            <input
+              type="text"
+              name="languages"
+              value={formData.languages.join(", ")}
+              onChange={(e) => handleArrayInputChange(e, "languages")}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+              placeholder="Enter languages separated by commas"
             />
           </div>
           <div>

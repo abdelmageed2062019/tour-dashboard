@@ -18,7 +18,7 @@ const authSlice = createSlice({
   name: "auth",
   initialState: {
     user: null,
-    token: localStorage.getItem("token") || null,
+    token: localStorage.getItem("token"),
     loading: false,
     error: null,
   },
@@ -27,6 +27,7 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.error = null;
+      localStorage.removeItem("token");
     },
   },
   extraReducers: (builder) => {
